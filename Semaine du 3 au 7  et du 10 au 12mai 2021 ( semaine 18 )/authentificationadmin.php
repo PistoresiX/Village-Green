@@ -1,15 +1,14 @@
+<?php session_start();?>
 <?php
-if  (isset ($_POST["Nom"])){
+if  (isset ($_SESSION["Log"])){
+
+require "connexion_bdd.php"; 
+$db = connexionBase();
 
 
-/*Connexion base jarditou*/
-require "connexion_bdd.php"; // Inclusion de notre bibliothèque de fonctions
-$db = connexionBase();// Appel de la fonction de connexion
+$admi = $_SESSION["Log"];
 
-/*Démarrage session*/
-session_start();
 
-/*vérification validité des champs */
 
 $_SESSION["Nom"]=$_POST["Nom"];
 $_SESSION["Prenom"]=$_POST["Prenom"];
@@ -56,14 +55,14 @@ else {$_SESSION["messmdp"] = "Veuillez entrer un mot de passe de 8 caractères l
 
 
 if (!($Nomok and $Prenomok and $Loginok and $Mailok and $mtpok)){
-    header('Location:index.php');
+    header('Location:admin.php');
     exit;
 }
 
 /*Vérification existance du mail */
 
 $mail=$_SESSION["Mail"];
-$requete2 = "SELECT * FROM users where us_mail=\"$mail\""; //concatenantion d'une chaine de caractère
+$requete2 = "SELECT * FROM users where us_mail=\"$mail\""; 
 $result2 = $db->prepare($requete2);
 $result2->execute();
 $nb_mail=$result2->rowCount();
@@ -71,11 +70,11 @@ $result2->closeCursor();
 
 if ($nb_mail != 0) {
         $_SESSION["messMail"] = "Ce Mail existe déjà";
-        header('Location:index.php');
+        header('Location:admin.php');
         exit;
 }
 
-/*Vérification existance du login */
+
 
 $log=$_SESSION["Login"];
 $requete1 = "SELECT * FROM users where us_log=\"$log\""; //concatenantion d'une chaine de caractère
@@ -86,15 +85,15 @@ $result1->closeCursor();
 
 if ($nb_log != 0) {
         $_SESSION["messLogin"] = "Ce login existe déjà";
-        header('Location:index.php');
+        header('Location:admin.php');
         exit;
 }
 
- /*Insertion nouvel utilisateur*/
+ 
     $dateins = date("y-m-d");
     $datecon = NULL;
     $password_hash = password_hash($_POST["motdepasse"], PASSWORD_DEFAULT);
-    $status = 0;
+    $status = 1;
 
 
     $requete = $db->prepare("INSERT INTO users (us_nom,us_prenom,us_mail,us_log,us_mp,us_d_ins,us_d_dercon,us_status) 
@@ -111,63 +110,10 @@ if ($nb_log != 0) {
 
 $requete->execute();
 
-//libère la connection au serveur de BDD
+
 $requete->closeCursor();
 
-//Envoie Mail inscription
-
-
-$message = "<!DOCTYPE html>
-<html lang='fr'> <!--indique la langue dans laquelle la page web est rédigéé aux robots de référencement ou aux logiciels de synthése vocale-->
-<!--les balises de la partie head ne sont pas affichées à l'exeption de title-->
-<head>
-    <!--meta permet de fourni des indications différentes du contenu de la page web -->
-    <meta charset='UTF-8'><!--permet de spécifier aux navigateurs l'encodage de la page web, il s'agit là de la valeur standard qui évite les pbs d'affichages des caractères spéciaux-->
-    <meta name='viewport' content='width=device-width, initial-scale=1.0',shrink-to-fit=no>
-    <title>Exemple Mail</title>
-    <!--on importe Bootstrap via une URL pointant sur un CDN (un serveur externe hébergeant des fichiers) -->
-    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' crossorigin='anonymous'>
-<style>
-html 
-{
-   font-size: 100%;
-}
-
-body 
-{
-    font-size: 1rem; /* Si html fixé à 100%, 1rem = 16px = taille par défaut de police de Firefox ou Chrome */
-}
-</style>  
-</head>
-<body>
-<div class='container'>
-    <div class='row'>
-        <div class='col-12'>
-          <h1 class='d-flex justify-content-center'>Confirmation Inscription</h1>
-      </div>    
-    </div> 
-    <br>  
-    <div class='row'>
-        <div class='col-12 d-flex justify-content-center'>
-          <p>Bienvenue chez Jarditou. Nous sommes heureux de vous compter parmi nos membres. Vous avez accés désormais au site Jarditou.com pour y faire vos achats</p>
-      </div>    
-    </div>   
-</div> 
-<script src='https://code.jquery.com/jquery-3.4.1.slim.min.js' integrity='sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n' crossorigin='anonymous'></script>
-<script src='https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js' integrity='sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo' crossorigin='anonymous'></script>
-<script src='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js' integrity='sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6' crossorigin='anonymous'></script>
-</html>";
-
-$aHeaders = array('MIME-Version' => '1.0',
-'Content-Type' => 'text/html; charset=utf-8',
-'From' => 'Jarditou <contact@jarditou.fr>',
-'Reply-To' => 'Service commercial <commerciaux@jarditou.com>',
-'X-Mailer' => 'PHP/' . phpversion()
-);
-
-mail($_SESSION["Mail"], "Confirmation de votre inscription chez Jarditou", $message, $aHeaders);
-
-/*Destruction session*/
+/*Destruction variable de session*/
 
 $_SESSION["Nom"]="";
 $_SESSION["Prenom"]="";
@@ -181,7 +127,6 @@ $_SESSION["messmdp"]="";
 
 $_SESSION["enrok"]=1;
 
-
 unset($_SESSION["Nom"]);
 unset($_SESSION["Prenom"]);
 unset($_SESSION["Login"]);
@@ -192,23 +137,15 @@ unset($_SESSION["messMail"]);
 unset($_SESSION["messLogin"]);
 unset($_SESSION["messmdp"]);
 
-
-/*if (ini_get("session.use_cookies")) 
-{
-    setcookie(session_name(), '', time()-1);
-}
-session_destroy();*/
-
-header('Location:index.php');
+header('Location:admin.php');
 exit;
-
 }
 else  {?>
     
     <!DOCTYPE html>
     <html lang="fr"> 
     <head>
-        
+       
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0",shrink-to-fit=no>
         <title>Document Contact</title>
@@ -216,10 +153,10 @@ else  {?>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     </head>
     <body>
-        <div class="container"> 
+        <div class="container">
             <div class="row">
                 <div class="col-12">
-                    <img src="public/images/promotion.jpg"  class="w-100" alt="Image responsive" title="Image promotion"> <!--image esponsive s'adapte progressivement à la taille de l'ecran sans disparaitre-->
+                    <img src="public/images/promotion.jpg"  class="w-100" alt="Image responsive" title="Image promotion"> 
                 </div>
             </div>
         <?php
@@ -231,7 +168,7 @@ else  {?>
             <a  class="btn btn-success d-flex justify-content-center" href="index.php">Inscription/Connexion</a>
         </div>      
         
-
+       
         <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
